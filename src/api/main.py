@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import os
 from datetime import datetime
+import pandas as pd
 from src.utils.logger import logger
 from src.database import db, get_db
 from src.database.models import (
@@ -163,7 +164,6 @@ async def startup_event():
         # Load or train recommendation engine
         logger.info("Loading recommendation engine")
         
-        import pandas as pd
         from src.data import DataLoader, DataValidator
         
         # Load processed data
@@ -175,6 +175,8 @@ async def startup_event():
             logger.warning("Processed data not found, loading raw data")
             users, products, interactions = DataLoader.load_all()
             users, products, interactions = DataValidator.validate_all(users, products, interactions)
+
+        _synchronize_catalog(db.get_session(), users, products, interactions)
         
         # Initialize engine
         recommendation_engine = RecommendationEngine()
@@ -185,6 +187,72 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Startup failed: {str(e)}")
         raise
+
+
+def _synchronize_catalog(db_session: Session, users, products, interactions) -> None:
+    """Synchronize shipped CSV data into SQL for catalog and event endpoints."""
+    try:
+        for row in users.itertuples(index=False):
+            user_id = str(row.user_id)
+            if db_session.query(User).filter(User.user_id == user_id).first() is None:
+                db_session.add(User(
+                    user_id=user_id,
+                    age=int(row.age),
+                    gender=str(row.gender),
+                    location=str(row.location),
+                    signup_date=_parse_datetime(row.signup_date),
+                ))
+        for row in products.itertuples(index=False):
+            product_id = str(row.product_id)
+            if db_session.query(Product).filter(Product.product_id == product_id).first() is None:
+                db_session.add(Product(
+                    product_id=product_id,
+                    product_name=str(row.product_name),
+                    category=str(row.category),
+                    subcategory=str(row.subcategory),
+                    brand=str(row.brand),
+                    description=str(row.description),
+                    price=float(row.price),
+                    rating=float(row.rating),
+                    stock=int(row.stock),
+                    created_at=_parse_datetime(row.created_at),
+                ))
+        db_session.commit()
+        existing_interactions = db_session.query(Interaction.interaction_id).count()
+        if existing_interactions == 0:
+            records = [
+                Interaction(
+                    interaction_id=str(row.interaction_id),
+                    user_id=str(row.user_id),
+                    product_id=str(row.product_id),
+                    interaction_type=str(row.interaction_type),
+                    weight=_interaction_weight(str(row.interaction_type)),
+                    timestamp=_parse_datetime(row.timestamp),
+                )
+                for row in interactions.itertuples(index=False)
+            ]
+            db_session.add_all(records)
+            db_session.commit()
+    except Exception:
+        db_session.rollback()
+        raise
+    finally:
+        db_session.close()
+
+
+def _interaction_weight(interaction_type: str) -> float:
+    return {
+        "view": 1.0,
+        "click": 2.0,
+        "wishlist": 3.0,
+        "cart": 4.0,
+        "purchase": 5.0,
+    }.get(interaction_type, 1.0)
+
+
+def _parse_datetime(value) -> datetime:
+    parsed = pd.to_datetime(value, errors="coerce")
+    return parsed.to_pydatetime() if not pd.isna(parsed) else datetime.utcnow()
 
 
 @app.on_event("shutdown")
