@@ -146,6 +146,13 @@ API runs on `http://localhost:8000`
 
 Railway deployment: `https://e-commerce-recommendation-system-production-0aef.up.railway.app`
 
+Railway uses the root [`railway.toml`](./railway.toml) configuration, builds the
+[`Dockerfile`](./Dockerfile), and starts the service with:
+
+```text
+python -m src.main api
+```
+
 ### View Swagger Docs
 ```
 http://localhost:8000/docs
