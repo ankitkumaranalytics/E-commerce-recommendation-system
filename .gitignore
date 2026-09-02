@@ -27,3 +27,6 @@ data/ecommerce_rec.db
 models/*.pkl
 models/*.joblib
 models/*.json
+
+# Unrelated workspace project
+/ai-job-agent/
