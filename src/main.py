@@ -9,6 +9,7 @@ Provides main entry point for the application with multiple modes:
 
 import sys
 import argparse
+import os
 from src.utils.logger import logger
 
 
@@ -35,7 +36,7 @@ def main() -> None:
     parser.add_argument(
         "--port",
         type=int,
-        default=8000,
+        default=int(os.getenv("PORT", os.getenv("API_PORT", "8000"))),
         help="API port (for api mode)"
     )
     

@@ -5,6 +5,7 @@ Main API server for the recommendation system.
 """
 
 from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
@@ -126,6 +127,19 @@ app = FastAPI(
     description="Advanced AI-powered product recommendation system",
     version="1.0.0"
 )
+
+
+@app.get("/", include_in_schema=False)
+async def application_home():
+    """Serve the existing single-page storefront from the API service."""
+    frontend_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "frontend",
+        "index.html",
+    )
+    if not os.path.isfile(frontend_path):
+        raise HTTPException(status_code=503, detail="Frontend asset is unavailable")
+    return FileResponse(frontend_path, media_type="text/html")
 
 # CORS middleware
 app.add_middleware(
@@ -737,7 +751,7 @@ async def get_categories(db_session: Session = Depends(get_db)):
 if __name__ == "__main__":
     import uvicorn
     
-    port = int(os.getenv("API_PORT", 8000))
+    port = int(os.getenv("PORT", os.getenv("API_PORT", "8000")))
     reload = os.getenv("API_RELOAD", "false").lower() == "true"
     
     uvicorn.run(

@@ -415,7 +415,9 @@
     </div>
 
     <script>
-        const API_URL = 'https://e-commerce-recommendation-system-production-0aef.up.railway.app';
+        const API_URL = window.location.protocol === 'http:' || window.location.protocol === 'https:'
+            ? window.location.origin
+            : 'http://localhost:8000';
         let currentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
 
         // Initialize
