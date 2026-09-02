@@ -139,7 +139,7 @@ Trains all ML models (~1 minute)
 
 ### Start API Server
 ```bash
-python -m src.main api
+uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
 ```
 
 API runs on `http://localhost:8000`
@@ -152,6 +152,9 @@ Railway uses the root [`railway.toml`](./railway.toml) configuration, builds the
 ```text
 python -m src.main api
 ```
+
+For non-Docker Railway builders, the fallback `Procfile` starts the same
+FastAPI application and uses Railway's injected `$PORT`.
 
 ### View Swagger Docs
 ```
