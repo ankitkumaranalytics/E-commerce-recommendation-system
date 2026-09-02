@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: ecommerce-rec-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=ecommerce_rec
+      - DB_USER=admin
+      - DB_PASSWORD=${DB_PASSWORD:?Set DB_PASSWORD before starting Compose}
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY before starting Compose}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ecommerce-rec-postgres
+    environment:
+      POSTGRES_DB: ecommerce_rec
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD before starting Compose}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-rec-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: ecommerce-rec-network

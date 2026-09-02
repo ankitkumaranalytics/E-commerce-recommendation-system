@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopSmart - AI Recommendations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        header {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: #667eea;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        nav button:hover {
+            color: #764ba2;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar input {
+            padding: 0.75rem 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 300px;
+            font-size: 1rem;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-button {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            color: #667eea;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tab-button.active {
+            background: #f0f0f0;
+            color: #764ba2;
+            border-bottom-color: #764ba2;
+        }
+
+        /* Product Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .product-category {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-rating {
+            color: #ffc107;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            font-size: 1.3rem;
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .product-score {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .product-actions button {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: white;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error state */
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #c33;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: white;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+            clear: both;
+        }
+
+        @media (max-width: 768px) {
+            .hero h2 {
+                font-size: 1.8rem;
+            }
+
+            .search-bar {
+                flex-direction: column;
+            }
+
+            .search-bar input {
+                width: 100%;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+
+            header h1 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🛍️ ShopSmart</h1>
+            <nav>
+                <ul>
+                    <li><button onclick="navigateTo('home')">Home</button></li>
+                    <li><button onclick="navigateTo('trending')">Trending</button></li>
+                    <li><button onclick="navigateTo('personalized')">For You</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h2>AI-Powered Shopping Assistant</h2>
+            <p>Discover products tailored just for you using advanced machine learning</p>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search products...">
+                <button onclick="searchProducts()">Search</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('recommended')">Recommended For You</button>
+            <button class="tab-button" onclick="showTab('trending')">Trending Now</button>
+            <button class="tab-button" onclick="showTab('categories')">By Category</button>
+        </div>
+
+        <!-- Content Area -->
+        <div id="content">
+            <!-- Recommended Products -->
+            <div id="recommended-section" class="tab-content">
+                <div class="products-grid" id="recommended-grid"></div>
+            </div>
+
+            <!-- Trending Products -->
+            <div id="trending-section" class="tab-content" style="display:none;">
+                <div class="products-grid" id="trending-grid"></div>
+            </div>
+
+            <!-- Categories -->
+            <div id="categories-section" class="tab-content" style="display:none;">
+                <div class="products-grid" id="categories-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let currentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadRecommendations();
+            await loadTrending();
+        });
+
+        async function loadRecommendations() {
+            try {
+                const response = await fetch(`${API_URL}/recommendations/user/${currentUserId}?n=10`);
+                if (!response.ok) throw new Error('Failed to load recommendations');
+                
+                const data = await response.json();
+                displayProducts(data, 'recommended-grid');
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('recommended-grid').innerHTML = 
+                    '<div class="error">Failed to load recommendations. ' + error.message + '</div>';
+            }
+        }
+
+        async function loadTrending() {
+            try {
+                const response = await fetch(`${API_URL}/recommendations/trending?n=10`);
+                if (!response.ok) throw new Error('Failed to load trending');
+                
+                const data = await response.json();
+                displayProducts(data, 'trending-grid');
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('trending-grid').innerHTML = 
+                    '<div class="error">Failed to load trending products</div>';
+            }
+        }
+
+        function displayProducts(products, gridId) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+
+            if (!products || products.length === 0) {
+                grid.innerHTML = '<p style="text-align:center; color:#999;">No products available</p>';
+                return;
+            }
+
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div style="cursor:pointer;" onclick="showProduct('${product.product_id}')">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.3em'%3E📦%3C/text%3E%3C/svg%3E">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">${product.product_name}</div>
+                        <div class="product-category">${product.category}</div>
+                        <div class="product-rating">${'★'.repeat(Math.round(product.rating))} ${product.rating.toFixed(1)}</div>
+                        <div class="product-price">$${product.price.toFixed(2)}</div>
+                        ${product.explanation ? `<div class="product-score">💡 ${product.explanation}</div>` : ''}
+                        <div class="product-actions">
+                            <button onclick="trackInteraction('${product.product_id}', 'view'); event.stopPropagation();">View</button>
+                            <button onclick="trackInteraction('${product.product_id}', 'cart'); event.stopPropagation();">Add to Cart</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            
+            // Remove active class
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName + '-section').style.display = 'block';
+            
+            // Add active class to button
+            event.target.classList.add('active');
+        }
+
+        function showProduct(productId) {
+            // In a real app, you'd fetch product details from API
+            document.getElementById('productModal').classList.add('active');
+            document.getElementById('modalBody').innerHTML = `
+                <div class="modal-title">Product Details</div>
+                <p><strong>Product ID:</strong> ${productId}</p>
+                <p>Additional details would be loaded from the API here.</p>
+                <button onclick="closeModal()">Close</button>
+            `;
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').classList.remove('active');
+        }
+
+        async function trackInteraction(productId, interactionType) {
+            try {
+                await fetch(`${API_URL}/events/interaction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUserId,
+                        product_id: productId,
+                        interaction_type: interactionType
+                    })
+                });
+            } catch (error) {
+                console.error('Error tracking interaction:', error);
+            }
+        }
+
+        async function searchProducts() {
+            const query = document.getElementById('searchInput').value;
+            if (!query.trim()) return;
+
+            try {
+                const response = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}&limit=20`);
+                if (!response.ok) throw new Error('Search failed');
+                
+                const data = await response.json();
+                displayProducts(data, 'recommended-grid');
+            } catch (error) {
+                console.error('Search error:', error);
+                document.getElementById('recommended-grid').innerHTML = 
+                    '<div class="error">Search failed</div>';
+            }
+        }
+
+        function navigateTo(section) {
+            // In a real app, this would navigate to different sections
+            console.log('Navigate to:', section);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('productModal');
+            if (event.target == modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        // Allow Enter to search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchProducts();
+        });
+    </script>
+</body>
+</html>

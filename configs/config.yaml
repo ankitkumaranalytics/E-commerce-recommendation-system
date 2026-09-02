@@ -1,0 +1,277 @@
+# E-Commerce Recommendation System Configuration
+
+# ============================================
+# DATABASE CONFIGURATION
+# ============================================
+database:
+  # Options: postgresql, sqlite
+  type: sqlite  # Use sqlite for dev without postgres
+  postgresql:
+    host: ${DB_HOST:localhost}
+    port: ${DB_PORT:5432}
+    database: ${DB_NAME:ecommerce_rec}
+    user: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:}
+  sqlite:
+    path: data/ecommerce_rec.db
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+
+# ============================================
+# RECOMMENDATION ENGINE WEIGHTS
+# ============================================
+recommendation:
+  n_recommendations: 10
+  
+  # Hybrid score weights (must sum to 1.0)
+  weights:
+    collaborative: 0.40
+    content_based: 0.25
+    popularity: 0.15
+    trending: 0.10
+    business_rules: 0.10
+  
+  # Interaction weights (configurable strength)
+  interaction_weights:
+    view: 1
+    click: 2
+    wishlist: 3
+    cart: 4
+    purchase: 5
+  
+  # Time decay for interactions (in days)
+  time_decay:
+    enabled: true
+    half_life_days: 30
+  
+  # Diversity control
+  diversity:
+    enabled: true
+    max_per_brand: 3
+    max_per_category: 4
+  
+  # Business rules
+  business_rules:
+    exclude_out_of_stock: true
+    min_rating: 2.0
+    exclude_purchased: true
+    price_range_multiplier: 1.2
+
+# ============================================
+# COLD START STRATEGY
+# ============================================
+cold_start:
+  new_user_strategy: 
+    - popular_products
+    - trending_products
+    - category_preferences_based
+  new_product_strategy:
+    - content_based_similarity
+    - category_popularity
+    - brand_similarity
+
+# ============================================
+# CONTENT-BASED MODEL
+# ============================================
+content_based:
+  vectorizer: tfidf  # Options: tfidf, sentence_transformer
+  min_df: 2
+  max_df: 0.8
+  max_features: 1000
+  ngram_range: [1, 2]
+  
+  # For sentence transformer (fallback if tfidf unavailable)
+  sentence_transformer:
+    model_name: all-MiniLM-L6-v2
+    similarity_threshold: 0.3
+
+# ============================================
+# COLLABORATIVE FILTERING
+# ============================================
+collaborative_filtering:
+  algorithm: als  # Options: als, svd, knn
+  als:
+    n_factors: 50
+    regularization: 0.01
+    iterations: 10
+    use_gpu: false
+  
+  svd:
+    n_factors: 50
+    learning_rate: 0.05
+    regularization: 0.02
+    iterations: 100
+  
+  knn:
+    n_neighbors: 20
+    similarity_metric: cosine
+
+# ============================================
+# TRENDING PRODUCTS
+# ============================================
+trending:
+  enabled: true
+  # How many days to consider for trending
+  window_days: 7
+  # Minimum interactions to be trending
+  min_interactions: 5
+
+# ============================================
+# CACHING
+# ============================================
+cache:
+  # Options: redis, memory
+  type: memory
+  memory:
+    max_size: 1000
+    ttl_seconds: 3600
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    db: 0
+    ttl_seconds: 3600
+  
+  # Cache specific recommendations
+  cache_recommendations: true
+  cache_model_predictions: true
+
+# ============================================
+# MODEL VERSIONING
+# ============================================
+models:
+  base_path: models/
+  version: v1
+  checkpoint_on_training: true
+  
+  # Individual model paths
+  popularity: popularity_${version}.pkl
+  content_based: content_based_${version}.pkl
+  collaborative: collaborative_${version}.pkl
+  trending: trending_${version}.pkl
+  hybrid: hybrid_${version}.pkl
+  
+  # Metadata
+  save_metadata: true
+  metadata_path: models/metadata_${version}.json
+
+# ============================================
+# API CONFIGURATION
+# ============================================
+api:
+  host: 0.0.0.0
+  port: 8000
+  debug: false
+  reload: false
+  log_level: INFO
+  
+  # CORS settings
+  cors:
+    allow_origins: ["*"]
+    allow_credentials: true
+    allow_methods: ["*"]
+    allow_headers: ["*"]
+  
+  # Rate limiting
+  rate_limiting:
+    enabled: false
+    requests_per_minute: 60
+  
+  # Pagination
+  pagination:
+    default_limit: 20
+    max_limit: 100
+
+# ============================================
+# EVALUATION METRICS
+# ============================================
+evaluation:
+  test_size: 0.2
+  random_state: 42
+  
+  # Which metrics to calculate
+  metrics:
+    - precision_at_k
+    - recall_at_k
+    - ndcg_at_k
+    - coverage
+    - diversity
+  
+  # K values for evaluation
+  k_values: [5, 10, 20]
+  
+  # Generate plots
+  generate_plots: true
+  plots_path: reports/
+
+# ============================================
+# LOGGING
+# ============================================
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/app.log
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+
+# ============================================
+# FEATURE ENGINEERING
+# ============================================
+features:
+  # Text preprocessing
+  text_preprocessing:
+    lowercase: true
+    remove_punctuation: true
+    remove_stopwords: true
+    lemmatization: false
+  
+  # Feature scaling
+  scaling:
+    enabled: true
+    method: minmax  # Options: minmax, standard
+
+# ============================================
+# DATA PIPELINE
+# ============================================
+data_pipeline:
+  # Missing value handling
+  missing_values:
+    strategy: drop  # Options: drop, mean, forward_fill
+    columns_to_preserve: []
+  
+  # Outlier detection
+  outlier_detection:
+    enabled: false
+    method: iqr  # Options: iqr, zscore
+  
+  # Duplicate handling
+  duplicate_handling:
+    check_enabled: true
+    keep: first  # Options: first, last
+
+# ============================================
+# DATASET GENERATION (for development)
+# ============================================
+dataset_generation:
+  n_users: 1000
+  n_products: 500
+  n_interactions: 10000
+  
+  # Categories
+  categories:
+    - Electronics
+    - Fashion
+    - Home & Garden
+    - Sports
+    - Books
+    - Toys
+    - Food
+    - Beauty
+  
+  # Realistic interaction distribution
+  interaction_distribution:
+    view: 0.50
+    click: 0.25
+    wishlist: 0.10
+    cart: 0.10
+    purchase: 0.05
