@@ -144,6 +144,8 @@ python -m src.main api
 
 API runs on `http://localhost:8000`
 
+Railway deployment: `https://e-commerce-recommendation-system-production-0aef.up.railway.app`
+
 ### View Swagger Docs
 ```
 http://localhost:8000/docs
