@@ -466,7 +466,14 @@ async def get_products(
         query = query.filter(Product.category == category)
     
     products = query.offset(skip).limit(limit).all()
-    return products
+    if products:
+        return products
+    if recommendation_engine and recommendation_engine.products_df is not None:
+        frame = recommendation_engine.products_df
+        if category:
+            frame = frame[frame["category"] == category]
+        return frame.iloc[skip:skip + limit].to_dict("records")
+    return []
 
 
 @app.get("/products/{product_id}", response_model=ProductSchema)
@@ -475,6 +482,12 @@ async def get_product(product_id: str, db_session: Session = Depends(get_db)):
     product = db_session.query(Product).filter(Product.product_id == product_id).first()
     
     if not product:
+        if recommendation_engine and recommendation_engine.products_df is not None:
+            match = recommendation_engine.products_df[
+                recommendation_engine.products_df["product_id"] == product_id
+            ]
+            if not match.empty:
+                return match.iloc[0].to_dict()
         raise HTTPException(status_code=404, detail="Product not found")
     
     return product
@@ -694,7 +707,15 @@ async def search_products(
         (Product.description.ilike(f"%{q}%"))
     ).offset(skip).limit(limit).all()
     
-    return products
+    if products:
+        return products
+    if recommendation_engine and recommendation_engine.products_df is not None:
+        frame = recommendation_engine.products_df
+        mask = frame["product_name"].str.contains(q, case=False, na=False) | frame[
+            "description"
+        ].str.contains(q, case=False, na=False)
+        return frame[mask].iloc[skip:skip + limit].to_dict("records")
+    return []
 
 
 # ============================================
@@ -705,7 +726,12 @@ async def search_products(
 async def get_categories(db_session: Session = Depends(get_db)):
     """Get all product categories."""
     categories = db_session.query(Product.category).distinct().all()
-    return [cat[0] for cat in categories if cat[0]]
+    values = [cat[0] for cat in categories if cat[0]]
+    if values:
+        return values
+    if recommendation_engine and recommendation_engine.products_df is not None:
+        return sorted(recommendation_engine.products_df["category"].dropna().unique().tolist())
+    return []
 
 
 if __name__ == "__main__":
